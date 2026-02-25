@@ -2738,6 +2738,9 @@ func parsePAT(payload []byte) ([]patProgram, int) {
 	if sectionLen+3 > len(section) {
 		return nil, 0
 	}
+	if sectionLen < 9 {
+		return nil, 0
+	}
 	entries := section[8 : 3+sectionLen-4]
 	out := make([]patProgram, 0, len(entries)/4)
 	for i := 0; i+4 <= len(entries); i += 4 {
@@ -4287,6 +4290,9 @@ func parseSDT(payload []byte, programNumber uint16) (string, string, string) {
 	}
 	sectionLen := int(binary.BigEndian.Uint16(section[1:3]) & 0x0FFF)
 	if sectionLen+3 > len(section) {
+		return "", "", ""
+	}
+	if sectionLen < 12 {
 		return "", "", ""
 	}
 	services := section[11 : 3+sectionLen-4]

@@ -12,6 +12,8 @@
 "OverallBitRate":"621499",
 "FrameRate":"29.970",
 "FrameCount":"119",
+"File_Created_Date":"<redacted>",
+"File_Created_Date_Local":"<redacted>",
 "File_Modified_Date":"<redacted>",
 "File_Modified_Date_Local":"<redacted>",
 "extra":{"OverallBitRate_Precision_Min":"621418","OverallBitRate_Precision_Max":"621580"}},{"@type":"Video","StreamOrder":"0-0",

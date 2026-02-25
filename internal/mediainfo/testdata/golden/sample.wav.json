@@ -9,6 +9,8 @@
 "OverallBitRate_Mode":"CBR",
 "OverallBitRate":"768156",
 "StreamSize":"78",
+"File_Created_Date":"<redacted>",
+"File_Created_Date_Local":"<redacted>",
 "File_Modified_Date":"<redacted>",
 "File_Modified_Date_Local":"<redacted>",
 "Encoded_Application":"Lavf62.3.100"},{"@type":"Audio","Format":"PCM",
