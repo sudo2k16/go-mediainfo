@@ -10,9 +10,11 @@ func fileTimes(path string) (string, string, string, string, bool) {
 		return "", "", "", "", false
 	}
 	mod := info.ModTime()
-	// On Linux we don't have a portable creation time (birth time) via os.FileInfo.
-	// MediaInfo typically omits created timestamps in this case, but keeps modified time.
+	// No portable birth time via os.FileInfo on non-darwin; fall back to mod time.
+	created := mod
+	createdUTC := created.UTC().Format("2006-01-02 15:04:05 MST")
+	createdLocal := created.Local().Format("2006-01-02 15:04:05")
 	modUTC := mod.UTC().Format("2006-01-02 15:04:05 MST")
 	modLocal := mod.Local().Format("2006-01-02 15:04:05")
-	return "", "", modUTC, modLocal, true
+	return createdUTC, createdLocal, modUTC, modLocal, true
 }
