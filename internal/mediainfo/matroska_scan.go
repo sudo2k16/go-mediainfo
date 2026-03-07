@@ -1255,6 +1255,10 @@ func applyMatroskaAudioProbes(info *MatroskaInfo, probes map[uint64]*matroskaAud
 			if dts.bitDepth > 0 {
 				stream.Fields = setFieldValue(stream.Fields, "Bit depth", fmt.Sprintf("%d bits", dts.bitDepth))
 			}
+			if dts.channels > 0 {
+				stream.Fields = setFieldValue(stream.Fields, "Channel(s)", formatChannels(uint64(dts.channels)))
+				stream.Fields = setFieldValue(stream.Fields, "Channel layout", channelLayout(uint64(dts.channels)))
+			}
 			if dts.sampleRate > 0 {
 				stream.Fields = setFieldValue(stream.Fields, "Sampling rate", formatSampleRate(float64(dts.sampleRate)))
 			}
@@ -1277,6 +1281,12 @@ func applyMatroskaAudioProbes(info *MatroskaInfo, probes map[uint64]*matroskaAud
 				stream.JSON = map[string]string{}
 			}
 			stream.JSON["Compression_Mode"] = "Lossy"
+			if dts.channels > 0 {
+				chStr := strconv.Itoa(dts.channels)
+				stream.JSON["Channels"] = chStr
+				stream.JSON["ChannelLayout"] = channelLayout(uint64(dts.channels))
+				stream.JSON["ChannelPositions"] = channelPositionsFromCount(chStr)
+			}
 			if dts.bitDepth > 0 {
 				stream.JSON["BitDepth"] = strconv.Itoa(dts.bitDepth)
 			}
