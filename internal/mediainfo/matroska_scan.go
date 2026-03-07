@@ -1285,7 +1285,9 @@ func applyMatroskaAudioProbes(info *MatroskaInfo, probes map[uint64]*matroskaAud
 				chStr := strconv.Itoa(dts.channels)
 				stream.JSON["Channels"] = chStr
 				stream.JSON["ChannelLayout"] = channelLayout(uint64(dts.channels))
-				stream.JSON["ChannelPositions"] = channelPositionsFromCount(chStr)
+				if pos := channelPositionsFromCount(chStr); pos != "" {
+					stream.JSON["ChannelPositions"] = pos
+				}
 			}
 			if dts.bitDepth > 0 {
 				stream.JSON["BitDepth"] = strconv.Itoa(dts.bitDepth)
