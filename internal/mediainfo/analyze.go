@@ -470,6 +470,10 @@ func AnalyzeFileWithOptions(path string, opts AnalyzeOptions) (Report, error) {
 			if rawWritingApp != "" {
 				general.JSON["Encoded_Application"] = rawWritingApp
 			}
+			// MediaInfo emits both Title and Movie for Matroska Segment/Info/Title.
+			if title := findField(general.Fields, "Title"); title != "" {
+				general.JSON["Movie"] = title
+			}
 			if info.DurationSeconds > 0 {
 				general.JSON["Duration"] = formatJSONFloat(info.DurationSeconds)
 			}
