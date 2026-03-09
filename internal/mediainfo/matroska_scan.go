@@ -727,8 +727,8 @@ func readMatroskaBlockHeader(er *ebmlReader, size int64, audioProbes map[uint64]
 					peek = int64(matroskaVideoProbeMaxBytes)
 				} else if needAudio && audioProbe != nil && audioProbe.format == "DTS" {
 					// DTS-HD extension substream (ExSS) follows the core frame, which can be several KB.
-					// Read the full block to detect XLL/ExSS sync words.
-					peek = size
+					// Cap at 32 KB to avoid large allocations on oversized blocks.
+					peek = 32768
 				} else if needAudio && audioProbe != nil && audioProbe.format == "E-AC-3" {
 					// In the final packet, skip probing additional laces to match official behavior.
 					if stopAfterThisPacket && maxLacesToProbe > 0 && i >= maxLacesToProbe {
@@ -1280,8 +1280,7 @@ func applyMatroskaAudioProbes(info *MatroskaInfo, probes map[uint64]*matroskaAud
 					stream.JSON["Format_AdditionalFeatures"] = "XBR"
 					stream.JSON["Format_Commercial_IfAny"] = "DTS-HD High Resolution Audio"
 				} else {
-					// DTS-HD with ExSS but unknown extension type; default to HD labeling.
-					stream.Fields = setFieldValue(stream.Fields, "Format", "DTS ES")
+					// DTS-HD with ExSS but unknown extension type; keep base format, only set commercial name.
 					stream.Fields = insertFieldAfter(stream.Fields, Field{Name: "Commercial name", Value: "DTS-HD"}, "Format/Info")
 					stream.JSON["Format_Commercial_IfAny"] = "DTS-HD"
 				}
