@@ -4220,9 +4220,16 @@ func parseDTSHDExSSMeta(payload []byte) (int, uint16, int, int, bool) {
 				return 0, 0, 0, 0, false
 			}
 			infoTextSize := int(infoTextSizeU) + 1
-			_, ok = read(uint8(infoTextSize * 8))
-			if !ok {
-				return 0, 0, 0, 0, false
+			bitsToSkip := infoTextSize * 8
+			for bitsToSkip > 0 {
+				chunk := bitsToSkip
+				if chunk > 255 {
+					chunk = 255
+				}
+				if _, ok = read(uint8(chunk)); !ok {
+					return 0, 0, 0, 0, false
+				}
+				bitsToSkip -= chunk
 			}
 		}
 		bitResolutionU, ok := read(5) // BitResolution
