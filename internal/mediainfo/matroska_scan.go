@@ -61,6 +61,7 @@ type dtsInfo struct {
 	hdBitDepth      int
 	hdChannels      int
 	hdSpeakerMask   uint16
+	hdSampleRate    int
 	hasSpeakerMask  bool
 }
 
@@ -1307,11 +1308,15 @@ func applyMatroskaAudioProbes(info *MatroskaInfo, probes map[uint64]*matroskaAud
 			if bitDepth > 0 {
 				stream.Fields = setFieldValue(stream.Fields, "Bit depth", fmt.Sprintf("%d bits", bitDepth))
 			}
-			if dts.sampleRate > 0 {
-				stream.Fields = setFieldValue(stream.Fields, "Sampling rate", formatSampleRate(float64(dts.sampleRate)))
+			sampleRate := dts.sampleRate
+			if dts.hd && dts.hdSampleRate > 0 {
+				sampleRate = dts.hdSampleRate
 			}
-			if dts.sampleRate > 0 && dts.samplesPerFrame > 0 {
-				frameRate := float64(dts.sampleRate) / float64(dts.samplesPerFrame)
+			if sampleRate > 0 {
+				stream.Fields = setFieldValue(stream.Fields, "Sampling rate", formatSampleRate(float64(sampleRate)))
+			}
+			if sampleRate > 0 && dts.samplesPerFrame > 0 {
+				frameRate := float64(sampleRate) / float64(dts.samplesPerFrame)
 				stream.Fields = setFieldValue(stream.Fields, "Frame rate", formatAudioFrameRate(frameRate, dts.samplesPerFrame))
 				if stream.JSON == nil {
 					stream.JSON = map[string]string{}
@@ -1379,14 +1384,14 @@ func applyMatroskaAudioProbes(info *MatroskaInfo, probes map[uint64]*matroskaAud
 			}
 			stream.JSON["Format_Settings_Endianness"] = "Big"
 			stream.JSON["Format_Settings_Mode"] = "16"
-			if dts.sampleRate > 0 {
+			if sampleRate > 0 {
 				if durStr := stream.JSON["Duration"]; durStr != "" {
 					if duration, err := strconv.ParseFloat(durStr, 64); err == nil && duration > 0 {
-						samplingCount := int64(math.Round(duration * float64(dts.sampleRate)))
+						samplingCount := int64(math.Round(duration * float64(sampleRate)))
 						stream.JSON["SamplingCount"] = strconv.FormatInt(samplingCount, 10)
 					}
 				} else if duration, ok := parseDurationSeconds(findField(stream.Fields, "Duration")); ok {
-					samplingCount := int64(math.Round(duration * float64(dts.sampleRate)))
+					samplingCount := int64(math.Round(duration * float64(sampleRate)))
 					stream.JSON["SamplingCount"] = strconv.FormatInt(samplingCount, 10)
 				}
 			}
@@ -1879,7 +1884,7 @@ func probeMatroskaAudio(probes map[uint64]*matroskaAudioProbe, track uint64, pay
 						info.hdBitDepth = bd
 					}
 				}
-				if ch, mask, bd, ok := parseDTSHDExSSMeta(payload); ok {
+				if ch, mask, bd, sr, ok := parseDTSHDExSSMeta(payload); ok {
 					info.hdChannels = ch
 					if mask != 0 {
 						info.hdSpeakerMask = mask
@@ -1887,6 +1892,9 @@ func probeMatroskaAudio(probes map[uint64]*matroskaAudioProbe, track uint64, pay
 					}
 					if bd > 0 && info.hdBitDepth == 0 {
 						info.hdBitDepth = bd
+					}
+					if sr > 0 {
+						info.hdSampleRate = sr
 					}
 				}
 			}
