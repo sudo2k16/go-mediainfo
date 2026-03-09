@@ -511,20 +511,13 @@ func AnalyzeFileWithOptions(path string, opts AnalyzeOptions) (Report, error) {
 					if stream.Kind != StreamAudio {
 						continue
 					}
-					if mode := findField(stream.Fields, "Bit rate mode"); mode != "" {
-						overallModeField = mode
+					if mode := findField(stream.Fields, "Bit rate mode"); strings.EqualFold(mode, "Variable") {
+						overallModeField = "Variable"
 						break
 					}
 					if stream.JSON != nil {
-						if mode := stream.JSON["BitRate_Mode"]; mode != "" {
-							switch strings.ToUpper(mode) {
-							case "VBR":
-								overallModeField = "Variable"
-							case "CBR":
-								overallModeField = "Constant"
-							default:
-								overallModeField = mode
-							}
+						if mode := stream.JSON["BitRate_Mode"]; strings.ToUpper(mode) == "VBR" {
+							overallModeField = "Variable"
 							break
 						}
 					}
