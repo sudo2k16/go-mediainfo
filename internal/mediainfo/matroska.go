@@ -1045,7 +1045,7 @@ func parseMatroskaInfo(buf []byte) (matroskaSegmentInfo, bool) {
 			}
 		case mkvIDTitle:
 			if len(payload) > 0 {
-				fields = append(fields, Field{Name: "Movie name", Value: strings.TrimRight(string(payload), "\x00")})
+				fields = append(fields, Field{Name: "Title", Value: strings.TrimRight(string(payload), "\x00")})
 			}
 		case mkvIDDateUTC:
 			if value, ok := readSigned(payload); ok {
@@ -1528,8 +1528,11 @@ func parseMatroskaTrackEntry(buf []byte, segmentDuration float64, durationPrec i
 		if segmentDuration > 0 {
 			fields = addStreamDuration(fields, segmentDuration)
 		}
-		if format == "AAC LC" {
+		if format == "AAC LC" || format == "Vorbis" || format == "Opus" {
 			fields = append(fields, Field{Name: "Compression mode", Value: "Lossy"})
+		}
+		if format == "FLAC" || format == "TrueHD" || format == "PCM" {
+			fields = append(fields, Field{Name: "Compression mode", Value: "Lossless"})
 		}
 		if codecName != "" && strings.Contains(codecName, "Lavc") {
 			fields = append(fields, Field{Name: "Writing library", Value: codecName})
