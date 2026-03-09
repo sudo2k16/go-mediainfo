@@ -504,6 +504,32 @@ func AnalyzeFileWithOptions(path string, opts AnalyzeOptions) (Report, error) {
 					}
 				}
 			}
+			// When video doesn't provide a bit rate mode, check audio streams.
+			// DTS-HD MA (XLL) and other VBR audio codecs signal Variable overall mode.
+			if overallModeField == "" {
+				for _, stream := range streams {
+					if stream.Kind != StreamAudio {
+						continue
+					}
+					if mode := findField(stream.Fields, "Bit rate mode"); mode != "" {
+						overallModeField = mode
+						break
+					}
+					if stream.JSON != nil {
+						if mode := stream.JSON["BitRate_Mode"]; mode != "" {
+							switch strings.ToUpper(mode) {
+							case "VBR":
+								overallModeField = "Variable"
+							case "CBR":
+								overallModeField = "Constant"
+							default:
+								overallModeField = mode
+							}
+							break
+						}
+					}
+				}
+			}
 			if overallModeField == "Variable" {
 				general.Fields = appendFieldUnique(general.Fields, Field{Name: "Overall bit rate mode", Value: overallModeField})
 				general.JSON["OverallBitRate_Mode"] = mapBitrateMode(overallModeField)

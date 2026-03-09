@@ -36,3 +36,31 @@ func insertFieldBefore(fields []Field, field Field, before string) []Field {
 	}
 	return append(fields, field)
 }
+
+func insertFieldAfter(fields []Field, field Field, after string) []Field {
+	for i := range fields {
+		if fields[i].Name == field.Name {
+			fields[i].Value = field.Value
+			return fields
+		}
+	}
+	for i, existing := range fields {
+		if existing.Name == after {
+			pos := i + 1
+			fields = append(fields, Field{})
+			copy(fields[pos+1:], fields[pos:])
+			fields[pos] = field
+			return fields
+		}
+	}
+	return append(fields, field)
+}
+
+func removeField(fields []Field, name string) []Field {
+	for i := range fields {
+		if fields[i].Name == name {
+			return append(fields[:i], fields[i+1:]...)
+		}
+	}
+	return fields
+}

@@ -93,6 +93,8 @@ type tsStream struct {
 	audioBitRateKbps    int64
 	audioBitRateMode    string
 	dtsHD               bool
+	dtsHDXLL            bool
+	dtsHDXBR            bool
 	hasTrueHD           bool
 	videoFrameRate      float64
 	// VC-1 (Blu-ray / TS) sequence header metadata.
@@ -2112,9 +2114,12 @@ func parseMPEGTSWithPacketSize(file io.ReadSeeker, size int64, packetSize int64,
 				if isTrueHD {
 					compressionMode = "Lossless"
 					jsonExtras["Compression_Mode"] = "Lossless"
-				} else if isBDAV && st.format == "DTS" && st.dtsHD {
+				} else if isBDAV && st.format == "DTS" && st.dtsHD && st.dtsHDXLL {
 					compressionMode = "Lossless"
 					jsonExtras["Compression_Mode"] = "Lossless"
+				} else if isBDAV && st.format == "DTS" && st.dtsHD {
+					// DTS-HD XBR/other: lossy but VBR.
+					jsonExtras["Compression_Mode"] = "Lossy"
 				} else if isBDAV && st.format == "DTS" {
 					jsonExtras["Compression_Mode"] = "Lossy"
 				}
@@ -2223,8 +2228,15 @@ func parseMPEGTSWithPacketSize(file io.ReadSeeker, size int64, packetSize int64,
 				jsonExtras["Format_Settings_Mode"] = "16"
 				jsonExtras["Format_Settings_Endianness"] = "Big"
 				if st.dtsHD {
-					jsonExtras["Format_Commercial_IfAny"] = "DTS-HD Master Audio"
-					jsonExtras["Format_AdditionalFeatures"] = "XLL"
+					if st.dtsHDXLL {
+						jsonExtras["Format_Commercial_IfAny"] = "DTS-HD Master Audio"
+						jsonExtras["Format_AdditionalFeatures"] = "XLL"
+					} else if st.dtsHDXBR {
+						jsonExtras["Format_Commercial_IfAny"] = "DTS-HD High Resolution Audio"
+						jsonExtras["Format_AdditionalFeatures"] = "XBR"
+					} else {
+						jsonExtras["Format_Commercial_IfAny"] = "DTS-HD"
+					}
 					jsonExtras["MuxingMode"] = "Stream extension"
 					jsonExtras["BitRate_Mode"] = "VBR"
 				} else {
@@ -3278,6 +3290,8 @@ func consumeDTS(entry *tsStream, payload []byte) {
 		if entry.dtsHD {
 			entry.audioBitRateKbps = 0
 			entry.audioBitRateMode = "Variable"
+			entry.dtsHDXLL = hasDTSHDXLLSync(entry.audioBuffer[i:])
+			entry.dtsHDXBR = hasDTSHDXBRSync(entry.audioBuffer[i:])
 			bdXLL, okXLL := parseDTSHDXLLBitDepth(entry.audioBuffer[i:])
 			if okXLL && bdXLL > 0 {
 				entry.audioBitDepth = bdXLL
@@ -3765,6 +3779,26 @@ func hasDTSCoreSync(payload []byte) bool {
 func hasDTSHDExtension(payload []byte) bool {
 	for i := 0; i+4 <= len(payload); i++ {
 		if payload[i] == 0x64 && payload[i+1] == 0x58 && payload[i+2] == 0x20 && payload[i+3] == 0x25 {
+			return true
+		}
+	}
+	return false
+}
+
+// hasDTSHDXLLSync checks for the XLL (lossless) extension sync word 0x41A29547.
+func hasDTSHDXLLSync(payload []byte) bool {
+	for i := 0; i+4 <= len(payload); i++ {
+		if payload[i] == 0x41 && payload[i+1] == 0xA2 && payload[i+2] == 0x95 && payload[i+3] == 0x47 {
+			return true
+		}
+	}
+	return false
+}
+
+// hasDTSHDXBRSync checks for the XBR (high resolution, lossy) extension sync word 0x655E315E.
+func hasDTSHDXBRSync(payload []byte) bool {
+	for i := 0; i+4 <= len(payload); i++ {
+		if payload[i] == 0x65 && payload[i+1] == 0x5E && payload[i+2] == 0x31 && payload[i+3] == 0x5E {
 			return true
 		}
 	}
