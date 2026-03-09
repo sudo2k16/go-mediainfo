@@ -28,6 +28,12 @@ func mapMatroskaCodecID(codecID string, trackType uint64) (StreamKind, string) {
 		return StreamAudio, "DTS"
 	case "A_TRUEHD":
 		return StreamAudio, "TrueHD"
+	case "A_PCM/INT/LIT":
+		return StreamAudio, "PCM"
+	case "A_PCM/INT/BIG":
+		return StreamAudio, "PCM"
+	case "A_PCM/FLOAT/IEEE":
+		return StreamAudio, "PCM"
 	case "S_TEXT/UTF8":
 		return StreamText, "UTF-8"
 	case "S_TEXT/ASS":
@@ -65,8 +71,16 @@ func mapMatroskaFormatInfo(format string) string {
 		return "MPEG Audio"
 	case "DTS":
 		return "Digital Theater Systems"
+	case "DTS XLL":
+		return "Digital Theater Systems"
+	case "DTS XBR":
+		return "Digital Theater Systems"
+	case "DTS ES":
+		return "Digital Theater Systems"
 	case "TrueHD":
 		return "Dolby TrueHD"
+	case "PCM":
+		return "PCM"
 	default:
 		return ""
 	}
