@@ -598,7 +598,11 @@ func parseEAC3FrameWithOptions(payload []byte, parseJOC bool) (ac3Info, int, boo
 	channels, layout := ac3ChannelLayout(int(acmod), lfeonVal == 1)
 	var jocMeta eac3JOCMeta
 	if parseJOC {
-		if meta, ok := parseEAC3EMDF(payload); ok {
+		jocPayload := payload
+		if frameSize > 0 && frameSize < len(jocPayload) {
+			jocPayload = jocPayload[:frameSize]
+		}
+		if meta, ok := parseEAC3EMDF(jocPayload); ok {
 			jocMeta = meta
 		}
 	}

@@ -129,3 +129,43 @@ func TestParseAC3Frame_RejectsInvalidBSID(t *testing.T) {
 		t.Fatalf("parseAC3Frame unexpectedly accepted invalid bsid=%d", bsid)
 	}
 }
+
+func TestParseEAC3FrameWithOptions_BoundsJOCScanToFrame(t *testing.T) {
+	frame := buildEAC3Frame(20, 1, 0x00)
+	trailer := buildEMDFJOCPayload()
+
+	if meta, ok := parseEAC3EMDF(trailer); !ok || !meta.hasJOC {
+		t.Fatalf("expected trailer EMDF payload to carry JOC metadata, ok=%v hasJOC=%v", ok, meta.hasJOC)
+	}
+
+	info, frameSize, ok := parseEAC3FrameWithOptions(append(append([]byte{}, frame...), trailer...), true)
+	if !ok {
+		t.Fatal("parseEAC3FrameWithOptions returned ok=false")
+	}
+	if frameSize != len(frame) {
+		t.Fatalf("frameSize mismatch: got=%d want=%d", frameSize, len(frame))
+	}
+	if info.hasJOC {
+		t.Fatal("trailing bytes outside the syncframe must not contribute JOC metadata")
+	}
+}
+
+func buildEMDFJOCPayload() []byte {
+	body := make([]byte, 6)
+	bw := ac3BitWriter{buf: body}
+	bw.writeBits(0, 2)  // version
+	bw.writeBits(0, 3)  // key_id
+	bw.writeBits(14, 5) // payload_id: JOC header
+	bw.writeBits(0, 1)  // smploffste
+	bw.writeBits(0, 1)  // duratione
+	bw.writeBits(0, 1)  // groupide
+	bw.writeBits(0, 1)  // codecdatae
+	bw.writeBits(1, 1)  // discard_unknown_payload
+	bw.writeBits(2, 8)  // payload_size
+	bw.writeBits(0, 1)  // no variable-bit continuation
+	bw.writeBits(0, 3)  // joc_dmx_config_idx
+	bw.writeBits(0, 6)  // one JOC object
+	bw.writeBits(0, 3)  // joc_ext_config_idx
+	bw.writeBits(0, 5)  // payload_id terminator
+	return append([]byte{0x58, 0x38, 0x00, byte(len(body))}, body...)
+}
