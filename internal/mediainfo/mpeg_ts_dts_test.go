@@ -76,9 +76,12 @@ func TestConsumeDTSCoreAndHDExtension(t *testing.T) {
 		t.Fatalf("unexpected core bitrate mode: mode=%q bitrate=%d", entry.audioBitRateMode, entry.audioBitRateKbps)
 	}
 
-	consumeDTS(&entry, []byte{0x00, 0x64, 0x58, 0x20, 0x25, 0x00})
+	consumeDTS(&entry, []byte{0x00, 0x64, 0x58, 0x20, 0x25, 0x00, 0x41, 0xA2, 0x95, 0x47})
 	if !entry.dtsHD {
 		t.Fatalf("expected DTS-HD extension sync to set dtsHD=true")
+	}
+	if !entry.dtsHDXLL {
+		t.Fatalf("expected DTS-HD XLL sync to set dtsHDXLL=true")
 	}
 	if entry.audioBitRateMode != "Variable" || entry.audioBitRateKbps != 0 {
 		t.Fatalf("expected DTS-HD mode switch, got mode=%q bitrate=%d", entry.audioBitRateMode, entry.audioBitRateKbps)

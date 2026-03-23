@@ -3232,6 +3232,8 @@ func consumeDTS(entry *tsStream, payload []byte) {
 			entry.dtsHD = true
 			entry.audioBitRateKbps = 0
 			entry.audioBitRateMode = "Variable"
+			entry.dtsHDXLL = entry.dtsHDXLL || hasDTSHDXLLSync(payload) || hasDTSHDXLLSync(entry.audioBuffer)
+			entry.dtsHDXBR = entry.dtsHDXBR || hasDTSHDXBRSync(payload) || hasDTSHDXBRSync(entry.audioBuffer)
 			bdXLL, okXLL := parseDTSHDXLLBitDepth(payload)
 			if okXLL && bdXLL > 0 {
 				entry.audioBitDepth = bdXLL
