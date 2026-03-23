@@ -3238,6 +3238,12 @@ func consumeDTS(entry *tsStream, payload []byte) {
 		if entry.dtsHD {
 			entry.dtsHDXLL = entry.dtsHDXLL || hasDTSHDXLLSync(payload)
 			entry.dtsHDXBR = entry.dtsHDXBR || hasDTSHDXBRSync(payload)
+		}
+		// Keep scanning for XLL/XBR/ExSS even after dtsHD is set, since the
+		// extension subtype sync may arrive in a later payload chunk.
+		if entry.dtsHD {
+			entry.dtsHDXLL = entry.dtsHDXLL || hasDTSHDXLLSync(payload) || hasDTSHDXLLSync(entry.audioBuffer)
+			entry.dtsHDXBR = entry.dtsHDXBR || hasDTSHDXBRSync(payload) || hasDTSHDXBRSync(entry.audioBuffer)
 			bdXLL, okXLL := parseDTSHDXLLBitDepth(payload)
 			if okXLL && bdXLL > 0 {
 				entry.audioBitDepth = bdXLL

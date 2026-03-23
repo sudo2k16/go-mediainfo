@@ -1358,7 +1358,8 @@ func applyMatroskaAudioProbes(info *MatroskaInfo, probes map[uint64]*matroskaAud
 				stream.JSON["BitDepth"] = strconv.Itoa(bitDepth)
 			}
 			if channels > 0 {
-				stream.JSON["Channels"] = strconv.Itoa(channels)
+				chStr := strconv.Itoa(channels)
+				stream.JSON["Channels"] = chStr
 				if dts.hd && dts.hasSpeakerMask {
 					if layout := dtsHDSpeakerActivityMaskChannelLayout(dts.hdSpeakerMask); layout != "" {
 						stream.JSON["ChannelLayout"] = layout
@@ -1368,6 +1369,9 @@ func applyMatroskaAudioProbes(info *MatroskaInfo, probes map[uint64]*matroskaAud
 					}
 				} else {
 					stream.JSON["ChannelLayout"] = channelLayout(uint64(channels))
+					if positions := channelPositionsFromCount(chStr); positions != "" {
+						stream.JSON["ChannelPositions"] = positions
+					}
 				}
 			}
 			if !dts.hd && dts.bitRateBps > 0 && !hasContainerBitrate {

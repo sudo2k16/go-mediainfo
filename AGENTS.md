@@ -9,6 +9,7 @@ Owner: soup
 
 ## Workflow
 - Don't ask for "continue": run parity + perf loops automatically, then commit/push once verified.
+- Before committing: run `gofmt -w` on touched `.go` files.
 - For `/mnt/storage/...` scans: be polite to disks (sample files; avoid full-tree scans; use `ionice -c3 nice -n 10` when doing bulk comparisons).
 
 ## Status (2026-02-16)
