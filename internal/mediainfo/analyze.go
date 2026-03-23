@@ -15,6 +15,49 @@ func AnalyzeFile(path string) (Report, error) {
 	return AnalyzeFileWithOptions(path, defaultAnalyzeOptions())
 }
 
+func normalizedBitRateMode(mode string) string {
+	switch strings.ToUpper(mode) {
+	case "VBR":
+		return "Variable"
+	case "CBR":
+		return "Constant"
+	default:
+		return mode
+	}
+}
+
+func streamBitRateMode(stream Stream) string {
+	if mode := findField(stream.Fields, "Bit rate mode"); mode != "" {
+		return normalizedBitRateMode(mode)
+	}
+	if stream.JSON != nil {
+		if mode := stream.JSON["BitRate_Mode"]; mode != "" {
+			return normalizedBitRateMode(mode)
+		}
+	}
+	return ""
+}
+
+func overallBitRateModeForKind(streams []Stream, kind StreamKind) string {
+	mode := ""
+	for _, stream := range streams {
+		if stream.Kind != kind {
+			continue
+		}
+		candidate := streamBitRateMode(stream)
+		if candidate == "" {
+			continue
+		}
+		if candidate == "Variable" {
+			return candidate
+		}
+		if mode == "" {
+			mode = candidate
+		}
+	}
+	return mode
+}
+
 func AnalyzeFileWithOptions(path string, opts AnalyzeOptions) (Report, error) {
 	opts = normalizeAnalyzeOptions(opts)
 	stat, err := os.Stat(path)
@@ -481,28 +524,11 @@ func AnalyzeFileWithOptions(path string, opts AnalyzeOptions) (Report, error) {
 			if len(parsed.attachments) == 0 {
 				setRemainingStreamSize(general.JSON, stat.Size(), streamSizeSum)
 			}
-			overallModeField := ""
-			for _, stream := range streams {
-				if stream.Kind != StreamVideo {
-					continue
-				}
-				if mode := findField(stream.Fields, "Bit rate mode"); mode != "" {
-					overallModeField = mode
-					break
-				}
-				if stream.JSON != nil {
-					if mode := stream.JSON["BitRate_Mode"]; mode != "" {
-						switch strings.ToUpper(mode) {
-						case "VBR":
-							overallModeField = "Variable"
-						case "CBR":
-							overallModeField = "Constant"
-						default:
-							overallModeField = mode
-						}
-						break
-					}
-				}
+			overallModeField := overallBitRateModeForKind(streams, StreamVideo)
+			// When video doesn't provide a bit rate mode, check audio streams.
+			// DTS-HD MA (XLL) and other VBR audio codecs signal Variable overall mode.
+			if overallModeField == "" {
+				overallModeField = overallBitRateModeForKind(streams, StreamAudio)
 			}
 			if overallModeField == "Variable" {
 				general.Fields = appendFieldUnique(general.Fields, Field{Name: "Overall bit rate mode", Value: overallModeField})

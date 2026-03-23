@@ -43,27 +43,39 @@ func formatAspectRatio(width, height uint64) string {
 	if width == 0 || height == 0 {
 		return ""
 	}
-	g := gcd(width, height)
-	reducedW := width / g
-	reducedH := height / g
-	if reducedW <= 50 && reducedH <= 50 {
-		return fmt.Sprintf("%d:%d", reducedW, reducedH)
+	dar := float64(width) / float64(height)
+	// Match MediaInfoLib's DisplayAspectRatio_Fill named-ratio table
+	// (File__Analyze_Streams.cpp).
+	switch {
+	case dar >= 0.54 && dar < 0.58:
+		return "9:16"
+	case dar >= 1.23 && dar < 1.27:
+		return "5:4"
+	case dar >= 1.30 && dar < 1.37:
+		return "4:3"
+	case dar >= 1.45 && dar < 1.55:
+		return "3:2"
+	case dar >= 1.55 && dar < 1.65:
+		return "16:10"
+	case dar >= 1.65 && dar < 1.70:
+		return "5:3"
+	case dar >= 1.74 && dar < 1.82:
+		return "16:9"
+	case dar >= 1.82 && dar < 1.88:
+		return "1.85:1"
+	case dar >= 2.15 && dar < 2.22:
+		return "2.2:1"
+	case dar >= 2.23 && dar < 2.30:
+		return "2.25:1"
+	case dar >= 2.30 && dar < 2.37:
+		return "2.35:1"
+	case dar >= 2.37 && dar < 2.395:
+		return "2.39:1"
+	case dar >= 2.395 && dar < 2.45:
+		return "2.40:1"
+	default:
+		return fmt.Sprintf("%.3f", dar)
 	}
-	ratio := float64(width) / float64(height)
-	common := []float64{1.33, 1.37, 1.66, 1.78, 1.85, 2.00, 2.20, 2.40}
-	for _, target := range common {
-		if math.Abs(ratio-target) < 0.02 {
-			return fmt.Sprintf("%.2f:1", target)
-		}
-	}
-	return fmt.Sprintf("%.2f:1", ratio)
-}
-
-func gcd(a, b uint64) uint64 {
-	for b != 0 {
-		a, b = b, a%b
-	}
-	return a
 }
 
 func formatBitsPerPixelFrame(bitrate float64, width, height uint64, fps float64) string {
