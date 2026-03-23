@@ -712,6 +712,13 @@ func parseFloatValue(value string) (float64, bool) {
 
 func parseRatioFloat(value string) (float64, bool) {
 	parts := strings.Split(value, ":")
+	if len(parts) == 1 {
+		parsed, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+		if err != nil || parsed <= 0 {
+			return 0, false
+		}
+		return parsed, true
+	}
 	if len(parts) != 2 {
 		return 0, false
 	}
