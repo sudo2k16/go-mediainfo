@@ -78,7 +78,6 @@ func formatAspectRatio(width, height uint64) string {
 	}
 }
 
-
 func formatBitsPerPixelFrame(bitrate float64, width, height uint64, fps float64) string {
 	if bitrate <= 0 || width == 0 || height == 0 || fps <= 0 {
 		return ""
